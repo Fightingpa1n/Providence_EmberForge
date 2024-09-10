@@ -5,7 +5,7 @@ import subprocess
 
 import debug as D #import the debug module
 import check as C #import the check module
-import install as I #import the install module
+import runstaller.requirements as I #import the install module
 
 #this is the main script that gets executed when the runstaller is run.
 #it's responsible for checking if everything is installed correctly and working, and if not it should install it,
@@ -13,18 +13,7 @@ import install as I #import the install module
 #and if everything is installed correctly from the start, it should just run the main program.
 
 #=================================== VARS ===================================#
-MODPACK_REPO = "https://github.com/Fightingpa1n/Providence_modpack.git" #link to the modpack repository
 MODPACK_NAME = "Providence_EmberForge" #name of the modpack
-MODPACK_ICON = "providence_icon.png" #filename of the modpack icon
-
-FILENAME_GIT = "git_installer.exe" #filename of the git installer
-FILENAME_JDK = "jdk_installer.exe" #filename of the jdk installer
-FILENAME_MMC = "mmc.zip" #filename of the multimc "installer" (it's just a zip file)
-
-URL_GIT = "https://drive.google.com/uc?id=17FDn41yqIeXiqQDKIo3BsnbWniaijZZF" #url to drive download
-URL_JDK = "https://drive.google.com/uc?id=1_O53V7ATJ7og3E3_5jTF8BFFqQ12G7Fg" #url to drive download
-URL_MMC = "https://drive.google.com/uc?id=1H-Dp5h7A4uUspNCDu_O0MBGo8psWt_B0" #url to drive download
-URL_ICON = "https://drive.google.com/uc?id=1R3deuIf0PpdeKeqpSrEgUxCB64YYmIct" #url to drive download
 
 #=================================== PATHS ===================================#
 ROAMING = os.getenv("APPDATA") #roaming directory

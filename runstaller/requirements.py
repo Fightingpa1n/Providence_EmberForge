@@ -10,23 +10,16 @@ import main as M
 import debug as D
 import check as C
 
-def _temp_folder(): #check if the temp folder exists and if not create it
-    if not os.path.exists(M.TEMP):
-        try:
-            os.mkdir(M.TEMP)
-        except Exception as e:
-            D.error_exit(f"An error occurred while creating the temp folder: {e}")
-    
-def _delete_file(filename): #delete a file or directory
+def _check_using_version(program):
     try:
-        filename = os.path.join(M.TEMP, filename) #make sure the file is in the temp folder
-        if os.path.exists(filename):
-            if os.path.isdir(filename):
-                shutil.rmtree(filename, ignore_errors=True)
-            else:
-                os.remove(filename)
-    except Exception as e:
-        D.error(f"An error occurred while deleting the file: {e}")
+        params = (program.split("_") if "_" in program else [program]) + ["--version"]
+        subprocess.run(params, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
+
+
+
 
 def _check_drive_url(url): #check if the url is valid
     #first we check if the url has the correct format.
@@ -100,42 +93,7 @@ def install_jdk():
         D.success("JDK Successfully Installed")
         _delete_file(M.FILENAME_JDK) #delete the installer
 
-def install_mmc():
-    _temp_folder() #temp folder
-    if C.check_mmc(): #check if multimc is already installed
-        D.error("MultiMC is already installed, can't install it again")
-        return
-    else:
-        D.message("Installing MultiMC")
-        try:
-            D.info("Downloading MultiMC \"Installer\"... (please wait, this may take a while)")
-            _download_from_drive(M.URL_MMC, M.FILENAME_MMC)
-            if not os.path.exists(os.path.join(M.TEMP, M.FILENAME_MMC)): #check if the file exists
-                D.error_exit("MultiMC install failed\n(file not found)")
-        except Exception as e:
-            D.error_exit(f"An error occurred while Downloading the MultiMC Installer: {e}")
-        D.success("MultiMC \"Installer\" Downloaded")
-        try:
-            D.info("\"Installing\" MultiMC... (please wait, this may take a while)")
 
-            #the "install" process for multimc is a bit different since it's a zip file.
-            #so we downloaded a zipfile called "mmc.zip". that zipfile contains the MultiMC folder, that folder contains the program.
-            #so what we wanna do is extract the MultiMC folder from the zipfile and move it to the correct location.
-            #that being %localappdata%/Programs. so we end up with %localappdata%/Programs/MultiMC
-
-            #check if the folder we want to extact to even exists.
-            if not os.path.exists(os.path.dirname(M.LOCATION_MMC_DIR)):
-                D.error_exit("MultiMC install failed\n(Programs directory not found)")
-
-            with zipfile.ZipFile(os.path.join(M.TEMP, M.FILENAME_MMC), "r") as zip_ref:
-                zip_ref.extractall(M.LOCATION_MMC_DIR) #extract the files to the MultiMC directory
-
-            if not os.path.exists(M.LOCATION_MMC_DIR) or not os.path.exists(M.LOCATION_MMC_EXE):
-                D.error_exit("MultiMC install failed\n(MultiMC probaly not correctly extracted)")
-        except Exception as e:
-            D.error_exit(f"An error occurred while \"installing\" MultiMC: {e}")
-        D.success("MultiMC Successfully Installed")
-        _delete_file(M.FILENAME_MMC) #delete the installer
 
 def install_modpack():
     if not C.check_mmc(): #check if multimc is installed
@@ -161,54 +119,7 @@ def install_modpack():
             D.error_exit(f"An error occurred while cloning the Modpack: {e}")
 
 #=================================== QOL ===================================# installing stuff that's nice to have but on fail will not stop the program
-def qol_configure_mmc():
-    if not C.check_mmc(): #check if multimc is installed
-        D.error("MultiMC not installed\n(can't configure MultiMC if it's not installed)")
-        return
-    
-    if C.qol_check_config(): #check if multimc is already configured
-        D.warning("MultiMC already configured")
-        return
-    else:
-        try:
-            D.info("Configuring MultiMC...")
 
-            with open(os.path.join(M.LOCATION_MMC_DIR, "multimc.cfg"), "w") as f: #create the config file and write the settings
-                f.write("JavaVersion=17.0.11\n")
-                f.write("JavaPath=C:/Program Files/Java/jdk-17/bin/javaw.exe\n")
-                f.write("Language=en_US\n")
-                f.write(f"LastHostname={os.getenv('COMPUTERNAME')}\n")
-                f.write("ShownNotifications=")
-        except Exception as e:
-            D.error(f"An error occurred while configuring MultiMC: {e}")
-        try:
-            D.info("Applying Config...")
-
-            #so the settings get applied we still need to start MultiMc once let it cope the settings and then close it prefferebly we don't want to distract the user so it would be nice to start it minimized
-            subprocess.Popen([M.LOCATION_MMC_EXE], creationflags=subprocess.CREATE_NO_WINDOW, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            time.sleep(1)
-            subprocess.run(["taskkill", "/IM", "MultiMC.exe", "/F"], check=True)
-
-        except Exception as e:
-            D.error(f"An error occurred while applying the configs: {e}")
-        D.success("MultiMC Successfully Configured")
-
-def qol_create_mmc_shortcut():
-    if not C.check_mmc(): #check if multimc is installed
-        D.error("MultiMC not installed\n(can't create MultiMC shortcut if it's not installed)")
-        return
-    
-    if C.qol_ckeck_shortcut(): #check if multimc shortcut is already created
-        D.warning("MultiMC shortcut already created")
-        return
-    else:
-        try:
-            D.info("Creating MultiMC Shortcut...")
-            subprocess.run(["powershell", "-Command", f"$s=(New-Object -COM WScript.Shell).CreateShortcut('{M.LOCATION_MMC_SHORTCUT}');$s.TargetPath='{M.LOCATION_MMC_EXE}';$s.Save()"], check=True)
-        except Exception as e:
-            D.error(f"An error occurred while creating the MultiMC Shortcut: {e}")
-        D.success("MultiMC Shortcut Successfully Created")
-    
 def qol_download_icon():
     _temp_folder() #temp folder
     if not C.check_mmc(): #check if multimc is installed
